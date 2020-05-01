@@ -5,34 +5,72 @@ import GithubReducer from './githubReducer'
 import {
     SEARCH_USERS,
     SET_LOADING,
-    CLEAR_USER,
     GET_USER,
-    GET_REPOS
+    GET_REPOS,
+    CLEAR_USERS
 } from '../types'
-import githubContext from './githubContext'
 
 const GithubState = props => {
+
     const initialState = {
         users: [],
         user: {},
         repos: [],
         loading: false
     }
+    const [state, dispatch] = useReducer(GithubReducer, initialState)
 
-    const [state, dispatch] = useReducer(GithubState, initialState)
 
-    //Search Users
-    //Get User
-    //Get Repos
-    //Clear Users
+
+    //Search Github users
+    const searchUsers = async text => {
+        setLoading()
+
+        const res = await axios.get(`https://api.github.com/search/users?q=${text}&client_id=${process.env.REACT_APP_GITHUB_CLIENT_ID}&?client_secret=${process.env.REACT_APP_GITHUB_CLIENT_SECRET}`);
+
+        dispatch({
+            type: SEARCH_USERS,
+            payload: res.data.items
+        })
+    }
+
+    // Get single Github User
+    const getUser = async username => {
+        setLoading()
+        const res = await axios.get(`https://api.github.com/users/${username}?client_id=${process.env.REACT_APP_GITHUB_CLIENT_ID}&?client_secret=${process.env.REACT_APP_GITHUB_CLIENT_SECRET}`);
+
+        dispatch({
+            type: GET_USER,
+            payload: res.data
+        })
+    }
+
+    const getUserRepos = async username => {
+        setLoading()
+        const res = await axios.get(`https://api.github.com/users/${username}/repos?per_page=5&sort=created:ase&client_id=${process.env.REACT_APP_GITHUB_CLIENT_ID}&?client_secret=${process.env.REACT_APP_GITHUB_CLIENT_SECRET}`);
+        dispatch({
+            type: GET_REPOS,
+            payload: res.data
+        })
+    }
+
+    // Clear users from state
+    const clearUsers = () => dispatch({ type: CLEAR_USERS })
+
     //Set Loading
+    const setLoading = () => dispatch({ type: SET_LOADING })
+
 
     return <GithubContext.Provider
         value={{
             users: state.users,
             user: state.user,
             repos: state.repos,
-            loading: state.loading
+            loading: state.loading,
+            searchUsers,
+            clearUsers,
+            getUser,
+            getUserRepos
         }}
     >
         {props.children}
